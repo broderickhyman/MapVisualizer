@@ -21,7 +21,7 @@ namespace MapVisualizer
     private Matrix projectionMatrix;
     private Matrix viewMatrix;
     private Matrix worldMatrix;
-    private bool orbit;
+    private bool orbit = true;
 
     private KeyboardState oldState;
 
@@ -51,10 +51,9 @@ namespace MapVisualizer
     /// </summary>
     protected override void Initialize()
     {
-      map.Initialize();
-      camTarget = new Vector3(0f, 0f, 0f);
-      camPosition = new Vector3(0f, 30f, -200f);
-      projectionMatrix = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45f), GraphicsDevice.DisplayMode.AspectRatio, 1f, 1000f);
+      camTarget = new Vector3(0f, 50f, 0f);
+      camPosition = new Vector3(0f, 150f, -300f);
+      projectionMatrix = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45f), GraphicsDevice.DisplayMode.AspectRatio, 1f, 100000f);
       map.Projection = projectionMatrix;
       viewMatrix = Matrix.CreateLookAt(camPosition, camTarget, new Vector3(0f, 1f, 0f));
       worldMatrix = Matrix.CreateWorld(camTarget, Vector3.Forward, Vector3.Up);
@@ -100,34 +99,35 @@ namespace MapVisualizer
       var keyboardState = Keyboard.GetState();
       if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || keyboardState.IsKeyDown(Keys.Escape))
         Exit();
+      const float speed = 3f;
 
       if (keyboardState.IsKeyDown(Keys.Left))
       {
-        camPosition.X--;
-        camTarget.X--;
+        camPosition.X -= speed;
+        camTarget.X -= speed;
       }
       if (keyboardState.IsKeyDown(Keys.Right))
       {
-        camPosition.X++;
-        camTarget.X++;
+        camPosition.X += speed;
+        camTarget.X += speed;
       }
       if (keyboardState.IsKeyDown(Keys.Up))
       {
-        camPosition.Y--;
-        camTarget.Y--;
+        camPosition.Y -= speed;
+        camTarget.Y -= speed;
       }
       if (keyboardState.IsKeyDown(Keys.Down))
       {
-        camPosition.Y++;
-        camTarget.Y++;
+        camPosition.Y += speed;
+        camTarget.Y += speed;
       }
       if (keyboardState.IsKeyDown(Keys.OemPlus))
       {
-        camPosition.Z++;
+        camPosition.Z += speed;
       }
       if (keyboardState.IsKeyDown(Keys.OemMinus))
       {
-        camPosition.Z--;
+        camPosition.Z -= speed;
       }
       if (keyboardState.IsKeyDown(Keys.Space) && oldState.IsKeyUp(Keys.Space))
       {
@@ -138,9 +138,9 @@ namespace MapVisualizer
       {
         var rotationMatrix = Matrix.CreateRotationY(MathHelper.ToRadians(1f));
         camPosition = Vector3.Transform(camPosition, rotationMatrix);
-        viewMatrix = Matrix.CreateLookAt(camPosition, camTarget, Vector3.Up);
-        map.View = viewMatrix;
       }
+      viewMatrix = Matrix.CreateLookAt(camPosition, camTarget, Vector3.Up);
+      map.View = viewMatrix;
       elapsedTime += gameTime.ElapsedGameTime;
       if (elapsedTime > TimeSpan.FromSeconds(1))
       {

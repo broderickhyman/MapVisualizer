@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -19,8 +20,8 @@ namespace MapVisualizer
     private const int indexCount = 36;
     private const int primativeCount = 12;
     private readonly int instanceCount;
-    private const int rows = 100;
-    private const int columns = 100;
+    private const int rows = 20;
+    private const int columns = 20;
     private Effect effect;
     private RasterizerState rasterizerState;
     public Matrix View;
@@ -29,7 +30,32 @@ namespace MapVisualizer
     public Map(Game game) : base(game)
     {
       instanceCount = rows * columns;
-      Debug.WriteLine(instanceCount);
+      Debug.WriteLine(instanceCount.ToString("N"));
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct InstanceData : IVertexType
+    {
+      public static readonly VertexDeclaration VertexDeclaration;
+      public Vector3 Position;
+      public Vector3 Scale;
+      public Color Color;
+
+      VertexDeclaration IVertexType.VertexDeclaration
+      {
+        get { return VertexDeclaration; }
+      }
+
+      static InstanceData()
+      {
+        var elements = new VertexElement[]
+        {
+          new VertexElement(0, VertexElementFormat.Vector3, VertexElementUsage.Position, 1),
+          new VertexElement(sizeof(float)*3, VertexElementFormat.Vector3, VertexElementUsage.Position, 2),
+          new VertexElement(sizeof(float)*6, VertexElementFormat.Color, VertexElementUsage.Color, 0),
+        };
+        VertexDeclaration = new VertexDeclaration(elements);
+      }
     }
 
     public override void Initialize()
@@ -38,22 +64,22 @@ namespace MapVisualizer
       {
         CullMode = CullMode.CullClockwiseFace
       };
-      var vertices = new VertexPositionColor[vertexCount];
-      var origin = new Vector3(-10, -10, -10);
-      var width = new Vector3(20, 0, 0);
-      var height = new Vector3(0, 20, 0);
-      var depth = new Vector3(0, 0, 20);
+      var vertices = new VertexPosition[vertexCount];
+      var origin = new Vector3(0, 0, 0);
+      var width = new Vector3(1f, 0, 0);
+      var height = new Vector3(0, 1f, 0);
+      var depth = new Vector3(0, 0, 1f);
 
-      vertices[0] = new VertexPositionColor(origin, Color.Red);
-      vertices[1] = new VertexPositionColor(origin + height, Color.Yellow);
-      vertices[2] = new VertexPositionColor(origin + height + width, Color.Green);
-      vertices[3] = new VertexPositionColor(origin + width, Color.Blue);
-      vertices[4] = new VertexPositionColor(depth + origin, Color.Red);
-      vertices[5] = new VertexPositionColor(depth + origin + height, Color.Yellow);
-      vertices[6] = new VertexPositionColor(depth + origin + height + width, Color.Green);
-      vertices[7] = new VertexPositionColor(depth + origin + width, Color.Blue);
+      vertices[0] = new VertexPosition(origin);
+      vertices[1] = new VertexPosition(origin + height);
+      vertices[2] = new VertexPosition(origin + height + width);
+      vertices[3] = new VertexPosition(origin + width);
+      vertices[4] = new VertexPosition(depth + origin);
+      vertices[5] = new VertexPosition(depth + origin + height);
+      vertices[6] = new VertexPosition(depth + origin + height + width);
+      vertices[7] = new VertexPosition(depth + origin + width);
 
-      vertexBuffer = new VertexBuffer(GraphicsDevice, VertexPositionColor.VertexDeclaration, vertexCount, BufferUsage.WriteOnly);
+      vertexBuffer = new VertexBuffer(GraphicsDevice, VertexPosition.VertexDeclaration, vertexCount, BufferUsage.WriteOnly);
       vertexBuffer.SetData(vertices);
 
       var indices = new short[indexCount];
@@ -73,22 +99,49 @@ namespace MapVisualizer
       indexBuffer = new IndexBuffer(GraphicsDevice, typeof(short), indices.Length, BufferUsage.WriteOnly);
       indexBuffer.SetData(indices);
 
-      var instances = new VertexPositionColor[instanceCount];
-      const int spacing = 30;
-      const int rowOffset = spacing * rows / -2;
-      const int colOffset = spacing * columns / -2;
+      var instances = new InstanceData[instanceCount];
+      const int scale = 20;
+      const int rowOffset = scale * rows / -2;
+      const int colOffset = scale * columns / -2;
       var rand = new Random();
+      const int centerX = columns / 2;
+      const int centerY = rows / 2;
+      var maxDistance = Math.Sqrt(Math.Pow(centerX, 2) + Math.Pow(centerY, 2));
+      Debug.WriteLine(centerX);
+      Debug.WriteLine(centerY);
+      Debug.WriteLine(maxDistance);
       for (var r = 0; r < rows; r++)
       {
         for (var c = 0; c < columns; c++)
         {
-          instances[(r * columns) + c] = new VertexPositionColor(new Vector3(rowOffset + (r * spacing), -50, colOffset + (c * spacing)), new Color(rand.Next(255), rand.Next(255), rand.Next(255)));
+          //Debug.WriteLine("");
+          //Debug.WriteLine($"r: {r} c: {c}");
+          var index = (r * columns) + c;
+          instances[index] = new InstanceData
+          {
+            Position = new Vector3(rowOffset + (r * scale), 0, colOffset + (c * scale)),
+            Color = new Color(rand.Next(255), rand.Next(255), rand.Next(255)),
+            //Scale = new Vector3(scale, rand.Next(scale, 250), scale)
+            Scale = new Vector3(scale, 10, scale)
+          };
+          var deltaX = Math.Abs(c - centerX);
+          var deltaY = Math.Abs(r - centerY);
+          var distance = Math.Sqrt(Math.Pow(deltaX, 2) + Math.Pow(deltaY, 2));
+          //Debug.WriteLine(deltaX);
+          //Debug.WriteLine(deltaY);
+          //Debug.WriteLine(distance);
+          var colorValue = (float)((1 - (distance / maxDistance)) * 150);
+          //Debug.WriteLine(colorValue);
+
+          instances[index].Color = new Color((int)colorValue + 100, 0, 0, 255);
+          instances[index].Scale.Y = (float)((1 - (distance / maxDistance)) * 250);
         }
       }
+      //instances[1].Scale.Y *= 2;
       //instances[0] = new VertexPositionColor(new Vector3(0, 0, 0), Color.Red);
       //instances[1] = new VertexPositionColor(new Vector3(30, 30, 0), Color.Blue);
 
-      instanceBuffer = new VertexBuffer(GraphicsDevice, VertexPositionColor.VertexDeclaration, instanceCount, BufferUsage.WriteOnly);
+      instanceBuffer = new VertexBuffer(GraphicsDevice, InstanceData.VertexDeclaration, instanceCount, BufferUsage.WriteOnly);
       instanceBuffer.SetData(instances);
 
       bindings = new VertexBufferBinding[2];
