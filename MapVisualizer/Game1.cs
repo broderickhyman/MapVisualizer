@@ -9,13 +9,22 @@ namespace MapVisualizer
   /// </summary>
   public class Game1 : Game
   {
-    GraphicsDeviceManager graphics;
-    SpriteBatch spriteBatch;
+    private readonly GraphicsDeviceManager graphics;
+    private SpriteBatch spriteBatch;
+    private Vector3 camTarget;
+    private Vector3 camPosition;
+    private Matrix projectionMatrix;
+    private Matrix viewMatrix;
+    private Matrix worldMatrix;
+    private BasicEffect basicEffect;
+    private bool orbit;
+    private readonly Map map;
 
     public Game1()
     {
       graphics = new GraphicsDeviceManager(this);
       Content.RootDirectory = "Content";
+      map = new Map(this);
     }
 
     /// <summary>
@@ -26,7 +35,32 @@ namespace MapVisualizer
     /// </summary>
     protected override void Initialize()
     {
-      // TODO: Add your initialization logic here
+      map.Initialize();
+      camTarget = new Vector3(0f, 0f, 0f);
+      camPosition = new Vector3(0f, 30f, -200f);
+      projectionMatrix = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45f), GraphicsDevice.DisplayMode.AspectRatio, 1f, 1000f);
+      map.Projection = projectionMatrix;
+      viewMatrix = Matrix.CreateLookAt(camPosition, camTarget, new Vector3(0f, 1f, 0f));// Y up
+      worldMatrix = Matrix.CreateWorld(camTarget, Vector3.Forward, Vector3.Up);
+      map.View = viewMatrix;
+
+      basicEffect = new BasicEffect(GraphicsDevice)
+      {
+        Alpha = 1f,
+        //Lighting requires normal information which VertexPositionColor does not have
+        //If you want to use lighting and VPC you need to create a custom def
+        LightingEnabled = false,
+        Projection = projectionMatrix,
+        // Want to see the colors of the vertices, this needs to be on
+        VertexColorEnabled = false,
+        View = viewMatrix,
+        World = worldMatrix
+      };
+
+      GraphicsDevice.RasterizerState = new RasterizerState
+      {
+        CullMode = CullMode.None
+      };
 
       base.Initialize();
     }
@@ -37,10 +71,7 @@ namespace MapVisualizer
     /// </summary>
     protected override void LoadContent()
     {
-      // Create a new SpriteBatch, which can be used to draw textures.
       spriteBatch = new SpriteBatch(GraphicsDevice);
-
-      // TODO: use this.Content to load your game content here
     }
 
     /// <summary>
@@ -49,7 +80,7 @@ namespace MapVisualizer
     /// </summary>
     protected override void UnloadContent()
     {
-      // TODO: Unload any non ContentManager content here
+
     }
 
     /// <summary>
@@ -62,7 +93,47 @@ namespace MapVisualizer
       if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
         Exit();
 
-      // TODO: Add your update logic here
+      if (Keyboard.GetState().IsKeyDown(Keys.Left))
+      {
+        camPosition.X--;
+        camTarget.X--;
+      }
+      if (Keyboard.GetState().IsKeyDown(Keys.Right))
+      {
+        camPosition.X++;
+        camTarget.X++;
+      }
+      if (Keyboard.GetState().IsKeyDown(Keys.Up))
+      {
+        camPosition.Y--;
+        camTarget.Y--;
+      }
+      if (Keyboard.GetState().IsKeyDown(Keys.Down))
+      {
+        camPosition.Y++;
+        camTarget.Y++;
+      }
+      if (Keyboard.GetState().IsKeyDown(Keys.OemPlus))
+      {
+        camPosition.Z++;
+      }
+      if (Keyboard.GetState().IsKeyDown(Keys.OemMinus))
+      {
+        camPosition.Z--;
+      }
+      if (Keyboard.GetState().IsKeyDown(Keys.Space))
+      {
+        orbit = !orbit;
+      }
+
+      if (orbit)
+      {
+        var rotationMatrix = Matrix.CreateRotationY(MathHelper.ToRadians(1f));
+        camPosition = Vector3.Transform(camPosition, rotationMatrix);
+        viewMatrix = Matrix.CreateLookAt(camPosition, camTarget, Vector3.Up);
+        basicEffect.View = viewMatrix;
+        map.View = viewMatrix;
+      }
 
       base.Update(gameTime);
     }
@@ -75,7 +146,7 @@ namespace MapVisualizer
     {
       GraphicsDevice.Clear(Color.CornflowerBlue);
 
-      // TODO: Add your drawing code here
+      map.Draw(gameTime);
 
       base.Draw(gameTime);
     }
