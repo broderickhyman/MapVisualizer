@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System;
 
 namespace MapVisualizer
 {
@@ -9,22 +10,37 @@ namespace MapVisualizer
   /// </summary>
   public class Game1 : Game
   {
+    public static float WindowWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width / 2f;
+    public static float WindowHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height / 1.25f;
     private readonly GraphicsDeviceManager graphics;
     private SpriteBatch spriteBatch;
+    private SpriteFont spriteFont;
+    private RasterizerState rasterizerState;
     private Vector3 camTarget;
     private Vector3 camPosition;
     private Matrix projectionMatrix;
     private Matrix viewMatrix;
     private Matrix worldMatrix;
-    private BasicEffect basicEffect;
     private bool orbit;
+
+    private KeyboardState oldState;
+
     private readonly Map map;
+    private int frameRate;
+    private int frameCounter;
+    private TimeSpan elapsedTime = TimeSpan.Zero;
 
     public Game1()
     {
-      graphics = new GraphicsDeviceManager(this);
+      graphics = new GraphicsDeviceManager(this)
+      {
+        PreferredBackBufferWidth = (int)WindowWidth,
+        PreferredBackBufferHeight = (int)WindowHeight
+      };
+      Window.Position = new Point((GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width / 2) - (graphics.PreferredBackBufferWidth / 2), (GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height / 2) - (graphics.PreferredBackBufferHeight / 2));
       Content.RootDirectory = "Content";
       map = new Map(this);
+      Components.Add(map);
     }
 
     /// <summary>
@@ -40,27 +56,17 @@ namespace MapVisualizer
       camPosition = new Vector3(0f, 30f, -200f);
       projectionMatrix = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45f), GraphicsDevice.DisplayMode.AspectRatio, 1f, 1000f);
       map.Projection = projectionMatrix;
-      viewMatrix = Matrix.CreateLookAt(camPosition, camTarget, new Vector3(0f, 1f, 0f));// Y up
+      viewMatrix = Matrix.CreateLookAt(camPosition, camTarget, new Vector3(0f, 1f, 0f));
       worldMatrix = Matrix.CreateWorld(camTarget, Vector3.Forward, Vector3.Up);
       map.View = viewMatrix;
 
-      basicEffect = new BasicEffect(GraphicsDevice)
-      {
-        Alpha = 1f,
-        //Lighting requires normal information which VertexPositionColor does not have
-        //If you want to use lighting and VPC you need to create a custom def
-        LightingEnabled = false,
-        Projection = projectionMatrix,
-        // Want to see the colors of the vertices, this needs to be on
-        VertexColorEnabled = false,
-        View = viewMatrix,
-        World = worldMatrix
-      };
-
-      GraphicsDevice.RasterizerState = new RasterizerState
+      rasterizerState = new RasterizerState
       {
         CullMode = CullMode.None
       };
+
+      GraphicsDevice.RasterizerState = rasterizerState;
+      oldState = Keyboard.GetState();
 
       base.Initialize();
     }
@@ -72,6 +78,7 @@ namespace MapVisualizer
     protected override void LoadContent()
     {
       spriteBatch = new SpriteBatch(GraphicsDevice);
+      spriteFont = Content.Load<SpriteFont>("Main");
     }
 
     /// <summary>
@@ -90,38 +97,39 @@ namespace MapVisualizer
     /// <param name="gameTime">Provides a snapshot of timing values.</param>
     protected override void Update(GameTime gameTime)
     {
-      if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+      var keyboardState = Keyboard.GetState();
+      if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || keyboardState.IsKeyDown(Keys.Escape))
         Exit();
 
-      if (Keyboard.GetState().IsKeyDown(Keys.Left))
+      if (keyboardState.IsKeyDown(Keys.Left))
       {
         camPosition.X--;
         camTarget.X--;
       }
-      if (Keyboard.GetState().IsKeyDown(Keys.Right))
+      if (keyboardState.IsKeyDown(Keys.Right))
       {
         camPosition.X++;
         camTarget.X++;
       }
-      if (Keyboard.GetState().IsKeyDown(Keys.Up))
+      if (keyboardState.IsKeyDown(Keys.Up))
       {
         camPosition.Y--;
         camTarget.Y--;
       }
-      if (Keyboard.GetState().IsKeyDown(Keys.Down))
+      if (keyboardState.IsKeyDown(Keys.Down))
       {
         camPosition.Y++;
         camTarget.Y++;
       }
-      if (Keyboard.GetState().IsKeyDown(Keys.OemPlus))
+      if (keyboardState.IsKeyDown(Keys.OemPlus))
       {
         camPosition.Z++;
       }
-      if (Keyboard.GetState().IsKeyDown(Keys.OemMinus))
+      if (keyboardState.IsKeyDown(Keys.OemMinus))
       {
         camPosition.Z--;
       }
-      if (Keyboard.GetState().IsKeyDown(Keys.Space))
+      if (keyboardState.IsKeyDown(Keys.Space) && oldState.IsKeyUp(Keys.Space))
       {
         orbit = !orbit;
       }
@@ -131,10 +139,17 @@ namespace MapVisualizer
         var rotationMatrix = Matrix.CreateRotationY(MathHelper.ToRadians(1f));
         camPosition = Vector3.Transform(camPosition, rotationMatrix);
         viewMatrix = Matrix.CreateLookAt(camPosition, camTarget, Vector3.Up);
-        basicEffect.View = viewMatrix;
         map.View = viewMatrix;
       }
+      elapsedTime += gameTime.ElapsedGameTime;
+      if (elapsedTime > TimeSpan.FromSeconds(1))
+      {
+        elapsedTime -= TimeSpan.FromSeconds(1);
+        frameRate = frameCounter;
+        frameCounter = 0;
+      }
 
+      oldState = keyboardState;
       base.Update(gameTime);
     }
 
@@ -144,9 +159,14 @@ namespace MapVisualizer
     /// <param name="gameTime">Provides a snapshot of timing values.</param>
     protected override void Draw(GameTime gameTime)
     {
+      frameCounter++;
       GraphicsDevice.Clear(Color.CornflowerBlue);
 
-      map.Draw(gameTime);
+      var fps = string.Format("FPS: {0}", frameRate);
+
+      spriteBatch.Begin();
+      spriteBatch.DrawString(spriteFont, fps, new Vector2(0, 0), Color.Black, 0, new Vector2(0, 0), 1, SpriteEffects.None, 1);
+      spriteBatch.End();
 
       base.Draw(gameTime);
     }

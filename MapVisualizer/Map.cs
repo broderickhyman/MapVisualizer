@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,21 +19,25 @@ namespace MapVisualizer
     private const int indexCount = 36;
     private const int primativeCount = 12;
     private readonly int instanceCount;
-    private const int rows = 10;
-    private const int columns = 10;
+    private const int rows = 100;
+    private const int columns = 100;
     private Effect effect;
-
+    private RasterizerState rasterizerState;
     public Matrix View;
-
     public Matrix Projection;
 
     public Map(Game game) : base(game)
     {
       instanceCount = rows * columns;
+      Debug.WriteLine(instanceCount);
     }
 
     public override void Initialize()
     {
+      rasterizerState = new RasterizerState
+      {
+        CullMode = CullMode.CullClockwiseFace
+      };
       var vertices = new VertexPositionColor[vertexCount];
       var origin = new Vector3(-10, -10, -10);
       var width = new Vector3(20, 0, 0);
@@ -54,15 +59,15 @@ namespace MapVisualizer
       var indices = new short[indexCount];
       indices[0] = 0; indices[1] = 1; indices[2] = 2;
       indices[3] = 0; indices[4] = 2; indices[5] = 3;
-      indices[6] = 4; indices[7] = 5; indices[8] = 6;
-      indices[9] = 4; indices[10] = 6; indices[11] = 7;
+      indices[6] = 4; indices[7] = 6; indices[8] = 5;
+      indices[9] = 4; indices[10] = 7; indices[11] = 6;
       indices[12] = 0; indices[13] = 4; indices[14] = 5;
-      indices[15] = 0; indices[16] = 1; indices[17] = 5;
-      indices[18] = 2; indices[19] = 3; indices[20] = 6;
+      indices[15] = 0; indices[16] = 5; indices[17] = 1;
+      indices[18] = 2; indices[19] = 6; indices[20] = 3;
       indices[21] = 3; indices[22] = 6; indices[23] = 7;
       indices[24] = 0; indices[25] = 3; indices[26] = 4;
-      indices[27] = 3; indices[28] = 4; indices[29] = 7;
-      indices[30] = 1; indices[31] = 2; indices[32] = 5;
+      indices[27] = 3; indices[28] = 7; indices[29] = 4;
+      indices[30] = 1; indices[31] = 5; indices[32] = 2;
       indices[33] = 2; indices[34] = 5; indices[35] = 6;
 
       indexBuffer = new IndexBuffer(GraphicsDevice, typeof(short), indices.Length, BufferUsage.WriteOnly);
@@ -77,7 +82,7 @@ namespace MapVisualizer
       {
         for (var c = 0; c < columns; c++)
         {
-          instances[(r * columns) + c] = new VertexPositionColor(new Vector3(rowOffset + (r * 30), -50, colOffset + (c * 30)), new Color(rand.Next(255), rand.Next(255), rand.Next(255)));
+          instances[(r * columns) + c] = new VertexPositionColor(new Vector3(rowOffset + (r * spacing), -50, colOffset + (c * spacing)), new Color(rand.Next(255), rand.Next(255), rand.Next(255)));
         }
       }
       //instances[0] = new VertexPositionColor(new Vector3(0, 0, 0), Color.Red);
@@ -97,6 +102,8 @@ namespace MapVisualizer
       effect.CurrentTechnique = effect.Techniques["BasicColorDrawing"];
       effect.Parameters["WorldViewProjection"].SetValue(this.View * this.Projection);
       GraphicsDevice.Indices = indexBuffer;
+      GraphicsDevice.RasterizerState = rasterizerState;
+      GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
       foreach (var pass in effect.CurrentTechnique.Passes)
       {

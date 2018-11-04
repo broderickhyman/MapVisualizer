@@ -19,3 +19,10 @@
 /processorParam:DebugMode=Auto
 /build:InstanceEffect.fx
 
+#begin Main.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:Main.spritefont
+
