@@ -24,7 +24,7 @@ struct InstanceInput
 struct VertexShaderOutput
 {
   float4 Position : SV_POSITION0;
-  float4 Color : COLOR0;
+  float4 Color : COLOR;
 };
 
 VertexShaderOutput MainVS(in VertexShaderInput input, float4 instanceTransform : POSITION1, float4 cubeColor : COLOR0, float3 scale : POSITION2)
@@ -48,11 +48,27 @@ float4 MainPS(VertexShaderOutput input) : COLOR
   return input.Color;
 }
 
+float4 LinePS(VertexShaderOutput input) : COLOR
+{
+  //return float4(0.05, 0.05 ,0.05, 0.25);
+  return float4(0, 0, 0, 0.2);
+//return float4(0, 0, 0, 0);
+}
+
 technique BasicColorDrawing
 {
   pass P0
   {
     VertexShader = compile VS_SHADERMODEL MainVS();
     PixelShader = compile PS_SHADERMODEL MainPS();
+  }
+};
+
+technique BasicLineDrawing
+{
+  pass P0
+  {
+    VertexShader = compile VS_SHADERMODEL MainVS();
+    PixelShader = compile PS_SHADERMODEL LinePS();
   }
 };

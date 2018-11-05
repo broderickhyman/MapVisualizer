@@ -35,7 +35,7 @@ namespace MapVisualizer
       Window.Position = new Point((GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width / 2) - (graphics.PreferredBackBufferWidth / 2), (GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height / 2) - (graphics.PreferredBackBufferHeight / 2));
       Content.RootDirectory = "Content";
       map = new Map(this);
-      Camera = new Camera(this, new Vector3(0f, 150f, -300f), Vector3.Forward, new Vector3(0, 1, 0));
+      Camera = new Camera(this, new Vector3(0f, 150f, 300f), Vector3.Forward, new Vector3(0, 1, 0));
       Components.Add(map);
       Components.Add(Camera);
     }
