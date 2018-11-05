@@ -8,6 +8,7 @@ namespace MapVisualizer
   public class Camera : GameComponent
   {
     public static float MovementSpeed = 200f;
+    public static float VerticalMovementSpeed = 400f;
     public static float RadialSpeed = 50f;
 
     public Vector3 Position { get; private set; }
@@ -56,13 +57,12 @@ namespace MapVisualizer
     }
 
     /// <summary>
-    /// Strafe up with respect to camera
+    /// Strafe up along world Up axis
     /// </summary>
     /// <param name="amount"></param>
     public void StrafeVert(float amount)
     {
-      Up.Normalize();
-      Position += Up * amount;
+      Position += Vector3.Up * amount;
     }
 
     /// <summary>
@@ -96,6 +96,7 @@ namespace MapVisualizer
     {
       var keyboardState = Keyboard.GetState();
       var movement = MovementSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+      var verticalMovement = VerticalMovementSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
       var radial = RadialSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
 
       if (keyboardState.IsKeyDown(Keys.W))
@@ -116,11 +117,11 @@ namespace MapVisualizer
       }
       if (keyboardState.IsKeyDown(Keys.LeftShift))
       {
-        StrafeVert(-movement);
+        StrafeVert(-verticalMovement);
       }
       if (keyboardState.IsKeyDown(Keys.Space))
       {
-        StrafeVert(movement);
+        StrafeVert(verticalMovement);
       }
       if (keyboardState.IsKeyDown(Keys.Up))
       {

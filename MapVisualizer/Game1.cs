@@ -116,11 +116,11 @@ namespace MapVisualizer
 
       var fps = string.Format("FPS: {0}", frameRate);
 
-      spriteBatch.Begin();
-      spriteBatch.DrawString(spriteFont, fps, new Vector2(0, 0), Color.Black, 0, new Vector2(0, 0), 1, SpriteEffects.None, 1);
-      spriteBatch.End();
-
       base.Draw(gameTime);
+
+      spriteBatch.Begin();
+      spriteBatch.DrawString(spriteFont, fps, new Vector2(0, 0), Color.LightGreen, 0, new Vector2(0, 0), 1.5f, SpriteEffects.None, 1);
+      spriteBatch.End();
     }
   }
 }

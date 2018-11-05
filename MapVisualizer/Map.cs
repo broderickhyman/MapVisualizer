@@ -81,6 +81,7 @@ namespace MapVisualizer
       SetDefault();
       //ReadFromFile();
       Camera.MovementSpeed = (rows + columns) / 2 * scale / 15;
+      Camera.VerticalMovementSpeed = Camera.MovementSpeed / 2;
 
       cubeBindings = new VertexBufferBinding[2];
       cubeBindings[0] = new VertexBufferBinding(cubeVertexBuffer);
@@ -155,8 +156,8 @@ namespace MapVisualizer
     private void SetDefault()
     {
       const int spacing = scale;// + 10;
-      rows = 2000;// 30;// 3000;
-      columns = 2000;// 20;// 2000;
+      rows = 600;// 30;// 3000;
+      columns = 600;// 20;// 2000;
       instanceCount = rows * columns;
       Debug.WriteLine(instanceCount.ToString("N"));
       var instances = new InstanceData[instanceCount];
