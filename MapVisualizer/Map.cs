@@ -6,8 +6,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MapVisualizer
 {
@@ -21,11 +19,10 @@ namespace MapVisualizer
     private const int indexCount = 36;
     private const int primativeCount = 12;
     private int instanceCount;
-    private const int rows = 20;
-    private const int columns = 20;
+    private const int rows = 200;
+    private const int columns = 200;
     private Effect effect;
     private RasterizerState rasterizerState;
-    public Matrix View;
     public Matrix Projection;
 
     private static Color red = new Color(145, 17, 17);
@@ -77,8 +74,8 @@ namespace MapVisualizer
       SetVertexBuffer();
       SetIndexBuffer();
 
-      //SetDefault();
-      ReadFromFile();
+      SetDefault();
+      //ReadFromFile();
 
       bindings = new VertexBufferBinding[2];
       bindings[0] = new VertexBufferBinding(vertexBuffer);
@@ -88,7 +85,7 @@ namespace MapVisualizer
 
     private void ReadFromFile()
     {
-      const string path = @"C:\Users\Broderick\Code\MapBuilder\MapBuilder\bin\Debug\output.csv";
+      const string path = @"..\..\..\..\output.csv";
       const int scale = 20;
       const int rowOffset = scale * rows / -2;
       const int colOffset = scale * columns / -2;
@@ -135,6 +132,7 @@ namespace MapVisualizer
         }
       }
       instanceCount = instances.Count;
+      Debug.WriteLine(instanceCount.ToString("N"));
 
       instanceBuffer = new VertexBuffer(GraphicsDevice, InstanceData.VertexDeclaration, instanceCount, BufferUsage.WriteOnly);
       instanceBuffer.SetData(instances.ToArray());
@@ -179,7 +177,7 @@ namespace MapVisualizer
           //Debug.WriteLine(colorValue);
 
           //instances[index].Color = new Color((int)colorValue + 100, 0, 0, 255);
-          instances[index].Scale.Y = (float)((1 - (distance / maxDistance)) * 250);
+          //instances[index].Scale.Y = (float)((1 - (distance / maxDistance)) * 250);
         }
       }
       //instances[1].Scale.Y *= 2;
@@ -234,7 +232,7 @@ namespace MapVisualizer
     public override void Draw(GameTime gameTime)
     {
       effect.CurrentTechnique = effect.Techniques["BasicColorDrawing"];
-      effect.Parameters["WorldViewProjection"].SetValue(this.View * this.Projection);
+      effect.Parameters["WorldViewProjection"].SetValue(Game1.Camera.ViewMatrix * Projection);
       GraphicsDevice.Indices = indexBuffer;
       GraphicsDevice.RasterizerState = rasterizerState;
       GraphicsDevice.DepthStencilState = DepthStencilState.Default;
