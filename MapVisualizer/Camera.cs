@@ -5,8 +5,11 @@ using System;
 
 namespace MapVisualizer
 {
-  public class Camera
+  public class Camera : GameComponent
   {
+    public static float MovementSpeed = 200f;
+    public static float RadialSpeed = 50f;
+
     public Vector3 Position { get; private set; }
     public Vector3 Up { get; private set; }
     public Vector3 Forward { get; private set; }
@@ -22,7 +25,7 @@ namespace MapVisualizer
       }
     }
 
-    public Camera(Vector3 position, Vector3 forward, Vector3 up)
+    public Camera(Game game, Vector3 position, Vector3 forward, Vector3 up) : base(game)
     {
       Position = position;
       Forward = forward;
@@ -61,28 +64,16 @@ namespace MapVisualizer
     }
 
     /// <summary>
-    /// Roll (around forward axis) clockwise with respect to camera
-    /// TODO: Is it CW or CCW?
-    /// </summary>
-    /// <param name="amount">Angle in degrees</param>
-    public void Roll(float amount)
-    {
-      Up.Normalize();
-      var left = Vector3.Cross(Up, Forward);
-      left.Normalize();
-
-      Up = Vector3.Transform(Up, Matrix.CreateFromAxisAngle(Forward, MathHelper.ToRadians(amount)));
-    }
-
-    /// <summary>
-    /// Yaw (turn/steer around up vector) to the left
+    /// Yaw (turn/steer around world up vector) to the left
     /// </summary>
     /// <param name="amount">Angle in degrees</param>
     public void Yaw(float amount)
     {
       Forward.Normalize();
+      Up.Normalize();
 
-      Forward = Vector3.Transform(Forward, Matrix.CreateFromAxisAngle(Up, MathHelper.ToRadians(amount)));
+      Forward = Vector3.Transform(Forward, Matrix.CreateFromAxisAngle(Vector3.Up, MathHelper.ToRadians(amount)));
+      Up = Vector3.Transform(Up, Matrix.CreateFromAxisAngle(Vector3.Up, MathHelper.ToRadians(amount)));
     }
 
     /// <summary>
@@ -97,6 +88,56 @@ namespace MapVisualizer
 
       Forward = Vector3.Transform(Forward, Matrix.CreateFromAxisAngle(left, MathHelper.ToRadians(amount)));
       Up = Vector3.Transform(Up, Matrix.CreateFromAxisAngle(left, MathHelper.ToRadians(amount)));
+    }
+
+    public override void Update(GameTime gameTime)
+    {
+      var keyboardState = Keyboard.GetState();
+      var movement = MovementSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+      var radial = RadialSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+      if (keyboardState.IsKeyDown(Keys.W))
+      {
+        Thrust(movement);
+      }
+      if (keyboardState.IsKeyDown(Keys.S))
+      {
+        Thrust(-movement);
+      }
+      if (keyboardState.IsKeyDown(Keys.A))
+      {
+        StrafeHorz(movement);
+      }
+      if (keyboardState.IsKeyDown(Keys.D))
+      {
+        StrafeHorz(-movement);
+      }
+      if (keyboardState.IsKeyDown(Keys.LeftShift))
+      {
+        StrafeVert(-movement);
+      }
+      if (keyboardState.IsKeyDown(Keys.Space))
+      {
+        StrafeVert(movement);
+      }
+      if (keyboardState.IsKeyDown(Keys.Up))
+      {
+        Pitch(-radial);
+      }
+      if (keyboardState.IsKeyDown(Keys.Down))
+      {
+        Pitch(radial);
+      }
+      if (keyboardState.IsKeyDown(Keys.Right))
+      {
+        Yaw(-radial * 2);
+      }
+      if (keyboardState.IsKeyDown(Keys.Left))
+      {
+        Yaw(radial * 2);
+      }
+
+      base.Update(gameTime);
     }
   }
 }

@@ -19,8 +19,9 @@ namespace MapVisualizer
     private const int indexCount = 36;
     private const int primativeCount = 12;
     private int instanceCount;
-    private const int rows = 200;
-    private const int columns = 200;
+    private int rows = 200;
+    private int columns = 200;
+    private const int scale = 20;
     private Effect effect;
     private RasterizerState rasterizerState;
     public Matrix Projection;
@@ -76,6 +77,7 @@ namespace MapVisualizer
 
       SetDefault();
       //ReadFromFile();
+      Camera.MovementSpeed = Math.Max(rows, columns) * scale / 15;
 
       bindings = new VertexBufferBinding[2];
       bindings[0] = new VertexBufferBinding(vertexBuffer);
@@ -86,22 +88,31 @@ namespace MapVisualizer
     private void ReadFromFile()
     {
       const string path = @"..\..\..\..\output.csv";
-      const int scale = 20;
-      const int rowOffset = scale * rows / -2;
-      const int colOffset = scale * columns / -2;
-      var rand = new Random();
 
       var instances = new List<InstanceData>();
-      var r = -1;
+      var map = new List<List<int>>();
       foreach (var line in File.ReadLines(path))
+      {
+        var row = new List<int>();
+        foreach (var split in line.Split(','))
+        {
+          row.Add(int.Parse(split));
+        }
+        map.Add(row);
+      }
+      rows = map.Count;
+      columns = map[0].Count;
+      var rowOffset = scale * rows / -2;
+      var colOffset = scale * columns / -2;
+      var r = -1;
+      foreach (var row in map)
       {
         r++;
         var c = -1;
-        var color = default(Color);
-        foreach (var split in line.Split(','))
+        foreach (var height in row)
         {
           c++;
-          var height = int.Parse(split);
+          var color = default(Color);
           if (height <= firstLevel)
           {
             color = blue;
@@ -125,7 +136,6 @@ namespace MapVisualizer
           instances.Add(new InstanceData
           {
             Position = new Vector3(rowOffset + (r * scale), 0, colOffset + (c * scale)),
-            //Color = new Color(rand.Next(255), rand.Next(255), rand.Next(255)),
             Color = color,
             Scale = new Vector3(scale, height, scale)
           });
@@ -143,12 +153,11 @@ namespace MapVisualizer
       instanceCount = rows * columns;
       Debug.WriteLine(instanceCount.ToString("N"));
       var instances = new InstanceData[instanceCount];
-      const int scale = 20;
-      const int rowOffset = scale * rows / -2;
-      const int colOffset = scale * columns / -2;
+      var rowOffset = scale * rows / -2;
+      var colOffset = scale * columns / -2;
       var rand = new Random();
-      const int centerX = columns / 2;
-      const int centerY = rows / 2;
+      var centerX = columns / 2;
+      var centerY = rows / 2;
       var maxDistance = Math.Sqrt(Math.Pow(centerX, 2) + Math.Pow(centerY, 2));
       Debug.WriteLine(centerX);
       Debug.WriteLine(centerY);

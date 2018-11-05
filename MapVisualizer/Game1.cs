@@ -35,7 +35,9 @@ namespace MapVisualizer
       Window.Position = new Point((GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width / 2) - (graphics.PreferredBackBufferWidth / 2), (GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height / 2) - (graphics.PreferredBackBufferHeight / 2));
       Content.RootDirectory = "Content";
       map = new Map(this);
+      Camera = new Camera(this, new Vector3(0f, 150f, -300f), Vector3.Forward, new Vector3(0, 1, 0));
       Components.Add(map);
+      Components.Add(Camera);
     }
 
     /// <summary>
@@ -46,8 +48,7 @@ namespace MapVisualizer
     /// </summary>
     protected override void Initialize()
     {
-      map.Projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45f), GraphicsDevice.DisplayMode.AspectRatio, 1f, 1000f);
-
+      map.Projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45f), GraphicsDevice.DisplayMode.AspectRatio, 1f, 10000f);
 
       rasterizerState = new RasterizerState
       {
@@ -56,8 +57,6 @@ namespace MapVisualizer
 
       GraphicsDevice.RasterizerState = rasterizerState;
       oldState = Keyboard.GetState();
-
-      Camera = new Camera(new Vector3(0f, 150f, -300f), Vector3.Forward, new Vector3(0, 1, 0));
 
       base.Initialize();
     }
@@ -92,58 +91,6 @@ namespace MapVisualizer
       if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || keyboardState.IsKeyDown(Keys.Escape))
       {
         Exit();
-      }
-
-      var movement = 100f * (float)gameTime.ElapsedGameTime.TotalSeconds;
-      var radial = 50f * (float)gameTime.ElapsedGameTime.TotalSeconds;
-
-      if (keyboardState.IsKeyDown(Keys.W))
-      {
-        Camera.Thrust(movement);
-      }
-      if (keyboardState.IsKeyDown(Keys.S))
-      {
-        Camera.Thrust(-movement);
-      }
-      if (keyboardState.IsKeyDown(Keys.A))
-      {
-        Camera.StrafeHorz(movement);
-      }
-      if (keyboardState.IsKeyDown(Keys.D))
-      {
-        Camera.StrafeHorz(-movement);
-      }
-      if (keyboardState.IsKeyDown(Keys.LeftShift))
-      {
-        Camera.StrafeVert(-movement);
-      }
-      if (keyboardState.IsKeyDown(Keys.Space))
-      {
-        Camera.StrafeVert(movement);
-      }
-      if (keyboardState.IsKeyDown(Keys.Up))
-      {
-        Camera.Pitch(-radial);
-      }
-      if (keyboardState.IsKeyDown(Keys.Down))
-      {
-        Camera.Pitch(radial);
-      }
-      if (keyboardState.IsKeyDown(Keys.Right))
-      {
-        Camera.Yaw(-radial * 2);
-      }
-      if (keyboardState.IsKeyDown(Keys.Left))
-      {
-        Camera.Yaw(radial * 2);
-      }
-      if (keyboardState.IsKeyDown(Keys.E))
-      {
-        Camera.Roll(radial);
-      }
-      if (keyboardState.IsKeyDown(Keys.Q))
-      {
-        Camera.Roll(-radial);
       }
 
       elapsedTime += gameTime.ElapsedGameTime;
