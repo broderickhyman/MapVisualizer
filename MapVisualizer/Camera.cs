@@ -33,13 +33,15 @@ namespace MapVisualizer
     }
 
     /// <summary>
-    /// Move forward with respect to camera
+    /// Move forward with respect to camera on a plane
     /// </summary>
     /// <param name="amount"></param>
     public void Thrust(float amount)
     {
       Forward.Normalize();
-      Position += Forward * amount;
+      var change = Forward * amount;
+      change.Y = 0;
+      Position += change;
     }
 
     /// <summary>
